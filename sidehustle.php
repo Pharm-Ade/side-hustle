@@ -1,31 +1,52 @@
 <?php
-if(isset($_POST['firstname']) && isset($_POST['lastname'])) {
-    $firstname = $_POST['firstname'];
-    $lastname = $_POST['lastname'];
-    echo 'Full Name:'.' '. $firstname .' '. $lastname;
-    echo "</br>";
-}
-if(isset($_POST['email'])) {
-    $email = $_POST['email'];
-    
-    echo 'Email Address:'.' '. $email;
-    echo "<br>";
-}
-if(isset($_POST['phonenumber'])) {
-    $phonenumber = $_POST['phonenumber'];
-    
-    echo 'Phone Number:'.' '. $phonenumber;
-    echo "<br>";
-}
-if(isset($_POST['program'])) {
-    $program = $_POST['program'];
-    
-    echo 'Program:'.' '. $program;
-    echo "<br>";
+if(isset($_COOKIE["type"]))
+{
+ header("location:index.php");
 }
 
+$message = '';
 
-
+if(isset($_POST["login"]))
+{
+ if(empty($_POST["username"]) || empty($_POST["password"]))
+ {
+  $message = "<div class='alert alert-danger'>Both Fields are required</div>";
+ }
+ else
+ {
+  $query = "
+  SELECT * FROM user_details 
+  WHERE username = :username
+  ";
+  $statement = $connect->prepare($query);
+  $statement->execute(
+   array(
+    'username' => $_POST["username"]
+   )
+  );
+  $count = $statement->rowCount();
+  if($count > 0)
+  {
+   $result = $statement->fetchAll();
+   foreach($result as $row)
+   {
+    if(password_verify($_POST["password"], $row["password"]))
+    {
+     setcookie("type", $row["user_type"], time()+3600);
+     header("location:index.php");
+    }
+    else
+    {
+     $message = '<div class="alert alert-danger">Wrong Password</div>';
+    }
+   }
+  }
+  else
+  {
+   $message = "<div class='alert alert-danger'>Wrong Username</div>";
+  }
+ }
+}
 
 
 ?>
@@ -37,27 +58,19 @@ if(isset($_POST['program'])) {
      <meta lang = 'en'>
      <title>Form Handling</title>
      <meta charset = 'utf-8'>
-     <h1>Registration for Side Hustle Program</h1>
+     <h1>Login to Side Hustle Program</h1>
  </head>
  <body>
  <form action = 'sidehustle.php' method = 'POST'>
- <label for = 'firstname' value = 'First Name'>First Name</label></br>
- <input type = 'text' name = 'firstname' placeholder = 'Enter first name'/></br></br>
- <label for = 'lastname' value = 'Last Name'>Last Name</label></br>
- <input type = 'text' name = 'lastname' placeholder = 'Enter last name'/></br><br>
- <label for = 'email' value = 'Email'>Email Address</label></br>
- <input type = 'email' name = 'email' placeholder = 'Enter email address'/></br><br>
- <label for = 'number' value = 'Phonenumber'>Phone Number</label></br>
- <input type = 'number' name = 'phonenumber' placeholder = 'Enter phone number'/></br><br>
- <label for="inputState">Program</label><br>
-        <select name="program" id="inputState"><br><br>
-          <option selected>Choose...</option><br>
-          <option value="backenddevelopment">Backend Development</option>
-          <option value="frontend_development">Frontend Development</option>
-          <option value="mobile_apllication_development">Mobile Application Development</option>
-</form><br>
+ <label for = 'username' value = 'username'>Username</label></br>
+ <input type = 'text' name = 'username' placeholder = 'Enter your username'/></br></br>
+ <label for = 'password' value = 'password'>Password</label></br>
+ <input type = 'password' name = 'password' placeholder = 'Enter your paasword'/></br><br>
+<label for = 'password' name = 'password' >Confirm Password</label></br>
+<input type = 'password' name = 'confirmPassword' placeholder = 'Confirm your password'/></br><br>
 <form>
-<input type = 'submit' name = 'submit' value ='SUBMIT'/>       
+<input type = 'submit' name = 'submit' value ='SUBMIT'/>
+<input type = 'submit' name = 'reset'   value = 'Reset'/>  
 </form>
 </body>
 </html>
